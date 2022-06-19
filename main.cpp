@@ -3,6 +3,9 @@
 #include <filesystem>
 #include <fstream>
 #include <winsock.h>
+#include "imageFile.h"
+#include <bitset> //ToDo delete
+
 
 namespace fs = std::filesystem;
 using namespace std;
@@ -16,8 +19,7 @@ enum Commands {
     decrypt,
     check,
     help,
-    error,
-    leave
+    error
 };
 
 /**
@@ -43,7 +45,6 @@ Commands getCommand(string input) {
     if (input == "--decrypt" || input == "-d") return decrypt;
     if (input == "--check" || input == "-c") return check;
     if (input == "--help" || input == "-h") return help;
-    if (input == "--leave" || input == "-l") return leave;
     return error;
 }
 
@@ -52,90 +53,66 @@ Commands getCommand(string input) {
  */
 void printHelp() {
     cout << "Commands:\n"
-            " -h, --help\t---\tstands for user manual\n"
-            " -i, --info\t---\tto change path to the file we are working with\n"
-            " -e, --encrypt\t---\tencrypts message from file\n"
-            " -d, --decrypt\t---\tdecrypts message from file\n"
-            " -c, --check\t---\tchecks if it's safe to work with file\n"
-            " -l, --leave\t---\texits from program" << endl;
+            " -h, --help\t\t\t\t\t---\tstands for user manual\n"
+            " -i, --info [FileName] \t\t\t\t---\t to get information about the file\n"
+            " -e, --encrypt [FileName] \"text\"\t\t---\tencrypts message from file\n"
+            " -d, --decrypt [FileName] [FileOutputName]\t---\tdecrypts message from file\n"
+            " -c, --check [FileName]\t\t\t\t---\tchecks if it's safe to work with file" << endl;
 }
 
-bool checkFile(fs::path file) {
-    if (file.extension() == ".jpg" || file.extension() == ".png" || file.extension() == ".jpeg")
-        return true;
-    return false;
-}
-
-bool getImageDimensions(string path, int width, int height) {
-    //FixMe
-    FILE * file = fopen(path,"rb");
-    fs::path filePath(path);
-    if (file == 0 || !(filePath.extension() == ".jpg" || filePath.extension() == ".png" || filePath.extension() == ".jpeg"))
-        return false;
-    fseek(file, 0, SEEK_END);
-    long fileLength = ftell(file);
-    if (fileLength < 24) {
-        fclose(file);
-        return false;
-    }
-    char info [24];
-    fread(info, 1, 24, file);
-    if (filePath.extension() == ".jpg" || filePath.extension() == ".jpeg" ) {
-        height = (info[7]<<8) + info[8];
-        width = (info[9]<<8) + info[10];
-        cout << height << endl;
-        cout << width << endl;
-        return true;
-    }
-
-}
-
-void printInfo(string imagePath) {
-    //FixMe
-    fs::path file(imagePath);
-    if (checkFile(file)) {
-        cout << "Filename:\t" << file.filename().string() << endl;
-        int x, y;
-        getImageDimensions(file.filename().string(),x,y);
-    } else {
-        cout << "Wrong path or file format!" << endl;
-    }
+void wrongCommandInput() {
+    throw runtime_error("Error! Wrong command input.\n"
+                        "Please use command \'-h\' to see the manual");
 }
 
 /**
  * Main
- * All work with user is done here
  * @return
  */
-int main() {
-    cout << "Program loaded and ready to go (-h stands for help):" << endl;
-    string in, path;
-    do {
-        cin >> in;
-        switch (getCommand(in)) {
+int main(int argc, char *argv[]) {
+//    unsigned int tmp = 0;
+//    fstream fileStream;
+//    fileStream.open("sample.png", ios::in| ios::binary);
+//    fileStream.read((char *) &tmp,34);
+//    cout << tmp << endl;
+//    fileStream.close();
+//    fileStream.open("out.png", ios::out | ios::binary);
+//    fileStream.write((char *) &tmp, 34);
+//    cout << tmp << endl;
+    ImageFile *imageFile;
+    try {
+        switch (getCommand(argv[1])) {
             case info:
-                cout << "Please enter a file path to get info:" << endl;
-                cin >> path;
-                printInfo(path);
+                if (argc != 3)
+                    wrongCommandInput();
+                imageFile = new ImageFile(argv[2]);
+                if (imageFile->readHeader())
+                    imageFile->printInfo();
                 break;
-            case encrypt:
+            case encrypt: //ToDo bool argc
+                imageFile = new ImageFile(argv[2]);
+                imageFile->encryptMessage(argv[3]);
                 break;
-            case decrypt:
+            case decrypt: //ToDo bool
+                imageFile = new ImageFile(argv[2]);
+                imageFile->decryptMessage();
                 break;
             case check:
+                if (argc != 4)
+                    wrongCommandInput();
+                imageFile = new ImageFile(argv[2]);
+                if (imageFile->checkFile(argv[3]))
+                    cout << "This message can be encrypted into this file" << endl;
                 break;
             case help:
                 printHelp();
                 break;
             case error:
-                cout << "Error! Wrong command input." << endl;
-                break;
-            case leave:
-                cout << "Program closed" << endl;
+                wrongCommandInput();
                 break;
         }
-    } while (getCommand(in) != leave);
-
-
+    } catch (runtime_error e) {
+        cout << e.what() << endl;
+    }
     return 0;
 }
