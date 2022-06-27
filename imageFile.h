@@ -24,10 +24,10 @@ struct ImageFile {
     ImageFile(char * path);
     bool readHeader();
     void printInfo();
-    bool checkFile(std::string message);
-    void encryptMessage(std::string message);
-    void decryptMessage();
-    ImageFormat getFileExtension();
+    bool checkFile(const std::string& message);
+    bool encryptMessage(std::string message);
+    bool decryptMessage() const;
+    ImageFormat getFileExtension() const;
     ~ImageFile();
 };
 

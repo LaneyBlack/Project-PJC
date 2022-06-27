@@ -2,9 +2,7 @@
 #include <string>
 #include <filesystem>
 #include <fstream>
-#include <winsock.h>
 #include "imageFile.h"
-#include <bitset> //ToDo delete
 
 
 namespace fs = std::filesystem;
@@ -34,7 +32,7 @@ string toLowerCase(string value) {
 }
 
 /**
- * Method made to convert a string input into enum Command value
+ * Method made to convert a string input into enum Command value.
  * @param input string command
  * @return enum command
  */
@@ -49,7 +47,7 @@ Commands getCommand(string input) {
 }
 
 /**
- * Prints all the commands into commandline
+ * Prints all the commands into commandline.
  */
 void printHelp() {
     cout << "Commands:\n"
@@ -57,7 +55,8 @@ void printHelp() {
             " -i, --info [FileName] \t\t\t\t---\t to get information about the file\n"
             " -e, --encrypt [FileName] \"text\"\t\t---\tencrypts message from file\n"
             " -d, --decrypt [FileName] [FileOutputName]\t---\tdecrypts message from file\n"
-            " -c, --check [FileName]\t\t\t\t---\tchecks if it's safe to work with file" << endl;
+            " -c, --check [FileName]\t\t\t\t---\tchecks if it's safe to work with file\n"
+            " Commands are both usable in upper and lower case." << endl;
 }
 
 void wrongCommandInput() {
@@ -67,18 +66,12 @@ void wrongCommandInput() {
 
 /**
  * Main
- * @return
+ * Creating an instance of the ImageFile.
+ * Then by getting a enum of the command starting working with files.
+ * Printing feedback to the user
+ * @return 0 if no errors
  */
 int main(int argc, char *argv[]) {
-//    unsigned int tmp = 0;
-//    fstream fileStream;
-//    fileStream.open("sample.png", ios::in| ios::binary);
-//    fileStream.read((char *) &tmp,34);
-//    cout << tmp << endl;
-//    fileStream.close();
-//    fileStream.open("out.png", ios::out | ios::binary);
-//    fileStream.write((char *) &tmp, 34);
-//    cout << tmp << endl;
     ImageFile *imageFile;
     try {
         switch (getCommand(argv[1])) {
@@ -89,13 +82,23 @@ int main(int argc, char *argv[]) {
                 if (imageFile->readHeader())
                     imageFile->printInfo();
                 break;
-            case encrypt: //ToDo bool argc
+            case encrypt:
+                if (argc != 4)
+                    wrongCommandInput();
                 imageFile = new ImageFile(argv[2]);
-                imageFile->encryptMessage(argv[3]);
+                if (imageFile->encryptMessage(argv[3]))
+                    cout << "Encrypted successfully" << endl;
+                else
+                    cout << "Encryption failed" << endl;
                 break;
-            case decrypt: //ToDo bool
+            case decrypt:
+                if (argc != 3)
+                    wrongCommandInput();
                 imageFile = new ImageFile(argv[2]);
-                imageFile->decryptMessage();
+                if (imageFile->decryptMessage())
+                    cout << "Decrypted successfully" << endl;
+                else
+                    cout << "Decryption failed" << endl;
                 break;
             case check:
                 if (argc != 4)
