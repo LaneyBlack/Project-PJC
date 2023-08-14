@@ -30,7 +30,6 @@ string toLowerCase(string value) {
         value[i] = tolower(value[i]);
     return value;
 }
-
 /**
  * Method made to convert a string input into enum Command value.
  * @param input string command
